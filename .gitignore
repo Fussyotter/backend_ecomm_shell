@@ -2,6 +2,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=linux,django,nextjs,windows
 
 ### Django ###
+plan.py
 *.log
 *.pot
 *.pyc
