@@ -7,6 +7,8 @@ class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     cart_products = models.ManyToManyField(Product, related_name='cart_items')
+    quantity = models.PositiveIntegerField(default=1)
+
 
     def __str__(self):
         return f"Cart {self.pk}"

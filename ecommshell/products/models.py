@@ -87,6 +87,8 @@ class Product(models.Model):
     is_active = models.BooleanField(verbose_name=_("Product visibility"),help_text=_("change product visibility"),default=True)
     created_at = models.DateTimeField(verbose_name=_("created at"), default=now)
     updated_at = models.DateTimeField(verbose_name=_("updated at"), default=now)
+    amount = models.IntegerField(verbose_name=_(
+        "amount"), default=0, editable=True)
 
     class Meta:
         ordering = ("-created_at",)
