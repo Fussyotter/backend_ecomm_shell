@@ -124,8 +124,12 @@ class ProductImage(models.Model):
     """
     Product Image Model
     """
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    image = models.ImageField(upload_to="products")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="product_image")
+    image = models.ImageField(verbose_name=_("image"),help_text=_("Upload a product image"), upload_to="images/", default="images/default.png", null=True, blank=True)
+    alt_text = models.CharField(verbose_name=_("alt text"),help_text=_("Enter alt text for image"), max_length=255, null=True, blank=True)
+    is_feature = models.BooleanField(verbose_name=_("feature image"),help_text=_("feature image"), default=False)
+    created_at = models.DateTimeField(verbose_name=_("created at"), default=now)
+    updated_at = models.DateTimeField(verbose_name=_("updated at"), default=now)        
 
     class Meta:
         verbose_name = _("Product Image")
