@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from django.utils.timezone import now
 from django.utils.translation import gettext_lazy as _
 from mptt.models import MPTTModel, TreeForeignKey
 
@@ -72,16 +73,20 @@ class Product(models.Model):
     """
     Product Model
     """
-    product_type = models.ForeignKey(ProductType, on_delete=models.RESTRICT)
-    category = models.ForeignKey(Category, on_delete=models.RESTRICT)
-    title = models.CharField(verbose_name=_("title"),help_text=("required"),max_length=255)
+    product_type = models.ForeignKey(
+        ProductType, on_delete=models.RESTRICT, null=True)
+    category = models.ForeignKey(
+        Category, on_delete=models.RESTRICT, null=True)
+    title = models.CharField(verbose_name=_("title"),help_text=("required"),max_length=255, null=True)
     description = models.TextField(verbose_name=_("description"),help_text=("not required"), blank=True)
-    slug = models.SlugField(max_length=255)
-    regular_price = models.DecimalField(verbose_name=_("regular price"),max_digits=5,decimal_places=2)
-    discount_price = models.DecimalField(verbose_name=_("discount price"),max_digits=5,decimal_places=2,blank=True,null=True)
+    slug = models.SlugField(max_length=255, null=True, blank=True)
+    regular_price = models.DecimalField(verbose_name=_(
+        "regular price"), max_digits=5, decimal_places=2, default=0)
+    discount_price = models.DecimalField(verbose_name=_(
+        "discount price"), max_digits=5, decimal_places=2, blank=True, null=True)
     is_active = models.BooleanField(verbose_name=_("Product visibility"),help_text=_("change product visibility"),default=True)
-    created_at = models.DateTimeField(verbose_name=_("created at"),auto_now_add=True)
-    updated_at = models.DateTimeField(verbose_name=_("updated at"),auto_now=True)
+    created_at = models.DateTimeField(verbose_name=_("created at"), default=now)
+    updated_at = models.DateTimeField(verbose_name=_("updated at"), default=now)
 
     class Meta:
         ordering = ("-created_at",)
