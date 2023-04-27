@@ -26,6 +26,8 @@ class Category(MPTTModel):
     def __str__(self):
         return self.name
     
+
+
 class ProductType(models.Model):
     """ 
     Product Type Model
@@ -41,6 +43,8 @@ class ProductType(models.Model):
     def __str__(self):
         return self.name
     
+
+
 class ProductSpecification(models.Model):
     """ 
     Product Specification Model
@@ -65,13 +69,60 @@ class ProductSpecification(models.Model):
 
 
 class Product(models.Model):
-    name = models.CharField(max_length=255)
-    description = models.TextField()
-    price = models.DecimalField(max_digits=8, decimal_places=2)
-    image = models.ImageField(upload_to='products/')
-    carts = models.ManyToManyField('cart.Cart')
-    orders = models.ManyToManyField(
-        'orders.Order', related_name='products', through='orders.OrderProduct')
+    """
+    Product Model
+    """
+    product_type = models.ForeignKey(ProductType, on_delete=models.RESTRICT)
+    category = models.ForeignKey(Category, on_delete=models.RESTRICT)
+    title = models.CharField(verbose_name=_("title"),help_text=("required"),max_length=255)
+    description = models.TextField(verbose_name=_("description"),help_text=("not required"), blank=True)
+    slug = models.SlugField(max_length=255)
+    regular_price = models.DecimalField(verbose_name=_("regular price"),max_digits=5,decimal_places=2)
+    discount_price = models.DecimalField(verbose_name=_("discount price"),max_digits=5,decimal_places=2,blank=True,null=True)
+    is_active = models.BooleanField(verbose_name=_("Product visibility"),help_text=_("change product visibility"),default=True)
+    created_at = models.DateTimeField(verbose_name=_("created at"),auto_now_add=True)
+    updated_at = models.DateTimeField(verbose_name=_("updated at"),auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        verbose_name = _("Product")
+        verbose_name_plural = _("Products")
+
+    def get_absolute_url(self):
+        """
+        Return absolute url
+        """
+        return reverse("products:product_detail", args=[self.slug])
+    def __str__(self):  
+        return self.title
+    
+class ProductSpecificationValue(models.Model):
+    """ 
+    Product Specification Value Model
+    
+    """
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    specification = models.ForeignKey(ProductSpecification, on_delete=models.RESTRICT)
+    value = models.CharField(verbose_name=_("Value"), help_text=_("Required"), max_length=255)
+
+    class Meta:
+        verbose_name = _("Product Specification Value")
+        verbose_name_plural = _("Product Specification Values")
+       
 
     def __str__(self):
-        return self.name
+        return self.value
+    
+class ProductImage(models.Model):
+    """
+    Product Image Model
+    """
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to="products")
+
+    class Meta:
+        verbose_name = _("Product Image")
+        verbose_name_plural = _("Product Images")
+
+    def __str__(self):
+        return self.product.title
