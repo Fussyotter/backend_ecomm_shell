@@ -5,6 +5,6 @@ app_name = "users"
 
 urlpatterns = [
     path("csrf/", views.get_csrf, name="csrf"),
+    path("login/", views.loginView, name="login"),
     # path("register/", views.RegisterView.as_view(), name="register"),
-    # path("login/", views.LoginView.as_view(), name="login"),
 ]
