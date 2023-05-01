@@ -5,10 +5,15 @@ from django.views.decorators.http import require_POST
 from django.middleware.csrf import get_token
 from rest_framework.views import APIView
 from django.http import JsonResponse
+from .serializers import UserSerializer
+from rest_framework import generics
 
+from .models import User
+
+
+    # this is finally making sense to me.  the get_token function is a built in django function that returns a csrf token.  we are then setting the csrf token in the response header.  the response header is then sent back to the client.  the client then sets the csrf token in the cookie.  the csrf token is then sent back to the server in the header of the next request.  the server then checks the csrf token in the header against the csrf token in the cookie.  if they match, the request is allowed to continue.  if they don't match, the request is rejected.  this is how django protects against csrf attacks.
 def get_csrf(request):
     response = JsonResponse({'Info': "Success - Set CSRF Cookie"})
-    # this is finally making sense to me.  the get_token function is a built in django function that returns a csrf token.  we are then setting the csrf token in the response header.  the response header is then sent back to the client.  the client then sets the csrf token in the cookie.  the csrf token is then sent back to the server in the header of the next request.  the server then checks the csrf token in the header against the csrf token in the cookie.  if they match, the request is allowed to continue.  if they don't match, the request is rejected.  this is how django protects against csrf attacks.
     response['X-CSRFToken'] = get_token(request)
     return response
 
@@ -27,4 +32,19 @@ def loginView(request):
     
     login(request, user)
     return JsonResponse({'Info': "Success - Logged In"})
+
+class signupView(APIView):
+    queryset = User.objects.all()
+
+    serializer_class = UserSerializer
+
+    def post(self, request):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse({'Info': "Success - Created User"})
+        return JsonResponse(serializer.errors, status=400)
     
+class UserListView(generics.ListAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
