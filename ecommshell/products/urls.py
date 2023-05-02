@@ -10,4 +10,5 @@ urlpatterns = [
     path("<slug:slug>/", views.Product.as_view(), name="product"),
     path("category/<slug:slug>/",
          views.CategoryItemView.as_view(), name="category_item"),
+    path("create-checkout-session/<slug:slug>/", views.CreateCheckoutSessionView.as_view(), name="create_checkout_session"),
 ]

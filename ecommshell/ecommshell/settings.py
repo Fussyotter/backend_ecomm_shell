@@ -157,3 +157,5 @@ CORS_ALLOW_CREDENTIALS = True
 #         'rest_framework.permissions.IsAuthenticated',
 #     ]
 # }
+
+STRIPE_SECRET_KEY = 'sk_test_51N3Ne2A9wnMJXjnrJh5jl4isEaGXayiuQIqb3YC7YsiFsnKufWQnBXP8d6XAndGpEljKCrZm3QClVF7kb2N7gWYt00t33UWZus'
