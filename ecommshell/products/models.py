@@ -79,7 +79,7 @@ class Product(models.Model):
         Category, on_delete=models.RESTRICT, null=True)
     title = models.CharField(verbose_name=_("title"),help_text=("required"),max_length=255, null=True)
     description = models.TextField(verbose_name=_("description"),help_text=("not required"), blank=True)
-    slug = models.SlugField(max_length=255, null=True, blank=True)
+    slug = models.SlugField(max_length=255, null=True, blank=True, unique=True)
     regular_price = models.DecimalField(verbose_name=_(
         "regular price"), max_digits=5, decimal_places=2, default=0)
     discount_price = models.DecimalField(verbose_name=_(
