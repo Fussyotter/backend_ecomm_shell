@@ -2,6 +2,7 @@ import stripe
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from rest_framework import generics
 from django.views import View
@@ -68,8 +69,26 @@ class CreateCheckoutSessionView(View):
            cancel_url='http://localhost:8000/cancel/',
        )
        # Render the Stripe checkout page with the session ID
-        return JsonResponse({'session_id': session.id})
+        return JsonResponse({'session_id': session.id,'product':product.title,'price':product.regular_price,'image':product.product_image.all()[0].image.url})
 
+
+def my_webhook_view(request):
+  payload = request.body
+  sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+  event = None
+  try:
+    event = stripe.Webhook.construct_event(
+        payload, sig_header, endpoint_secret
+    )
+  except ValueError as e:
+    # Invalid payload
+    return HttpResponse(status=400)
+  except stripe.error.SignatureVerificationError as e:
+    # Invalid signature
+    return HttpResponse(status=400)
+
+  # Passed signature verification
+  return HttpResponse(status=200)
     # return redirect(checkout_session.url)
 # class CreateCheckoutSessionView(APIView):
 #     def post(self, request, *args, **kwargs):
