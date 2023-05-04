@@ -48,6 +48,7 @@ class CreateCheckoutSessionView(View):
         product = get_object_or_404(Product, slug=self.kwargs["slug"])
         stripe.api_key = settings.STRIPE_SECRET_KEY
        # Create a Stripe checkout session
+        metadata = {'product_id': str(product.id)}
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[
@@ -56,6 +57,8 @@ class CreateCheckoutSessionView(View):
                                 'currency': 'usd',
                                 'product_data': {
                                     'name': product.title,
+                                    'metadata': metadata,
+
                                 },
                                 'unit_amount': int(product.regular_price * 100),
                                 
@@ -65,30 +68,72 @@ class CreateCheckoutSessionView(View):
                         },
                     ],
            mode='payment',
-           success_url='http://localhost:8000/success/',
+           success_url='http://localhost:3000',
            cancel_url='http://localhost:8000/cancel/',
        )
+        print(f"metadata: {metadata}")
+
        # Render the Stripe checkout page with the session ID
         return JsonResponse({'session_id': session.id,'product':product.title,'price':product.regular_price,'image':product.product_image.all()[0].image.url})
 
 
 def my_webhook_view(request):
-  payload = request.body
-  sig_header = request.META['HTTP_STRIPE_SIGNATURE']
-  event = None
-  try:
-    event = stripe.Webhook.construct_event(
-        payload, sig_header, endpoint_secret
-    )
-  except ValueError as e:
-    # Invalid payload
-    return HttpResponse(status=400)
-  except stripe.error.SignatureVerificationError as e:
-    # Invalid signature
-    return HttpResponse(status=400)
+    payload = request.body
+    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+    event = None
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+    except ValueError as e:
+        # Invalid payload
+        return HttpResponse(status=400)
+    except stripe.error.SignatureVerificationError as e:
+        # Invalid signature
+        return HttpResponse(status=400)
+    print("Received Stripe webhook event: ", event['type'])
 
-  # Passed signature verification
-  return HttpResponse(status=200)
+
+    if event['type'] == 'checkout.session.completed':
+        # Retrieve the session. If you require line items in the response, you may include them by expanding line_items.
+        session = stripe.checkout.Session.retrieve(
+            event['data']['object']['id'],
+            expand=['line_items'],
+        )
+
+        line_items = session.line_items
+        # Fulfill the purchase...
+        fulfill_order(line_items)
+
+    # Passed signature verification
+    return HttpResponse(status=200)
+
+
+def fulfill_order(line_items):
+    # TODO: fill me in
+    for line_item in line_items['data']:
+        price_data = line_item['price_data']
+        product_id = price_data['product_data']['metadata']['product_id']
+        print(f"product_id: {product_id}")
+
+        # Retrieve the product with the given product ID
+        product = Product.objects.get(id=product_id)
+        print(f"product: {product}")
+
+        # Decrement the product quantity by 1
+        product.amount -= 1
+        product.save()
+
+    # print("Fulfilling order")
+
+
+
+
+
+
+
+
+
     # return redirect(checkout_session.url)
 # class CreateCheckoutSessionView(APIView):
 #     def post(self, request, *args, **kwargs):
