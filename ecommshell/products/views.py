@@ -6,12 +6,14 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from rest_framework import generics
 from django.views import View
-from rest_framework.views import APIView
 from . import models
 from .models import Category, Product
 from .serializers import CategorySerializer, ProductSerializer
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
+import logging
 
+logger = logging.getLogger(__name__)
 
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.all()
@@ -77,37 +79,34 @@ class CreateCheckoutSessionView(View):
         return JsonResponse({'session_id': session.id,'product':product.title,'price':product.regular_price,'image':product.product_image.all()[0].image.url})
 
 
-def my_webhook_view(request):
-    payload = request.body
-    sig_header = request.META['HTTP_STRIPE_SIGNATURE']
-    event = None
-    try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, endpoint_secret
-        )
-    except ValueError as e:
-        # Invalid payload
-        return HttpResponse(status=400)
-    except stripe.error.SignatureVerificationError as e:
-        # Invalid signature
-        return HttpResponse(status=400)
-    print("Received Stripe webhook event: ", event['type'])
+class WebHook(View):
+    def post(self, request):
+        event = None
+        payload = request.body
+        sig_header = request.META['HTTP_STRIPE_SIGNATURE']
 
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, settings.STRIPE_SECRET_WEBHOOK
+            )
+        except ValueError as err:
+            # Invalid payload
+            raise err
+        except stripe.error.SignatureVerificationError as err:
+            # Invalid signature
+            raise err
 
-    if event['type'] == 'checkout.session.completed':
-        # Retrieve the session. If you require line items in the response, you may include them by expanding line_items.
-        session = stripe.checkout.Session.retrieve(
-            event['data']['object']['id'],
-            expand=['line_items'],
-        )
-
-        line_items = session.line_items
-        # Fulfill the purchase...
-        fulfill_order(line_items)
-
-    # Passed signature verification
-    return HttpResponse(status=200)
-
+        # Handle the event
+        if event.type == 'payment_intent.succeeded':
+            payment_intent = event.data.object
+            print("--------payment_intent ---------->", payment_intent)
+        elif event.type == 'payment_method.attached':
+            payment_method = event.data.object
+            print("--------payment_method ---------->", payment_method)
+        # ... handle other event types
+        else:
+            print('Unhandled event type {}'.format(event.type))
+        return JsonResponse(success=True, safe=False)
 
 def fulfill_order(line_items):
     # TODO: fill me in
