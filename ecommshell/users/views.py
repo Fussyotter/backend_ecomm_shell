@@ -5,8 +5,8 @@ from django.views.decorators.http import require_POST
 from django.middleware.csrf import get_token
 from rest_framework.views import APIView
 from django.http import JsonResponse
-from .serializers import UserSerializer
 from rest_framework import generics
+from .serializers import UserSerializer
 
 from .models import User
 
