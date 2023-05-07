@@ -1,7 +1,9 @@
 import stripe
+import json
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse
+
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render
 from rest_framework import generics
@@ -10,6 +12,8 @@ from . import models
 from .models import Category, Product
 from .serializers import CategorySerializer, ProductSerializer
 from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
+
 from django.views.decorators.csrf import csrf_exempt
 import logging
 
@@ -50,7 +54,6 @@ class CreateCheckoutSessionView(View):
         product = get_object_or_404(Product, slug=self.kwargs["slug"])
         stripe.api_key = settings.STRIPE_SECRET_KEY
        # Create a Stripe checkout session
-        metadata = {'product_id': str(product.id)}
         session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[
@@ -59,7 +62,6 @@ class CreateCheckoutSessionView(View):
                                 'currency': 'usd',
                                 'product_data': {
                                     'name': product.title,
-                                    'metadata': metadata,
 
                                 },
                                 'unit_amount': int(product.regular_price * 100),
@@ -73,41 +75,46 @@ class CreateCheckoutSessionView(View):
            success_url='http://localhost:3000',
            cancel_url='http://localhost:8000/cancel/',
        )
-        print(f"metadata: {metadata}")
+        
 
        # Render the Stripe checkout page with the session ID
         return JsonResponse({'session_id': session.id,'product':product.title,'price':product.regular_price,'image':product.product_image.all()[0].image.url})
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class WebHook(View):
-    def post(self, request):
-        event = None
+    def post(self, request, *args, **kwargs):
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        webhook_secret = settings.STRIPE_SECRET_WEBHOOK
         payload = request.body
         sig_header = request.META['HTTP_STRIPE_SIGNATURE']
+        event = None
+        # print("--------payload ---------->", payload)
 
         try:
             event = stripe.Webhook.construct_event(
-                payload, sig_header, settings.STRIPE_SECRET_WEBHOOK
+                payload, sig_header, webhook_secret
             )
         except ValueError as err:
             # Invalid payload
-            raise err
+            return HttpResponse(status=400)
         except stripe.error.SignatureVerificationError as err:
             # Invalid signature
-            raise err
+            return HttpResponse(status=400)
 
         # Handle the event
-        if event.type == 'payment_intent.succeeded':
-            payment_intent = event.data.object
+        if event['type'] == 'payment_intent.succeeded':
+            payment_intent = event['data']['object']
             print("--------payment_intent ---------->", payment_intent)
-        elif event.type == 'payment_method.attached':
-            payment_method = event.data.object
+        elif event['type'] == 'payment_method.attached':
+            payment_method = event['data']['object']
             print("--------payment_method ---------->", payment_method)
         # ... handle other event types
         else:
-            print('Unhandled event type {}'.format(event.type))
-        return JsonResponse(success=True, safe=False)
+            print('Unhandled event type {}'.format(event['type']))
 
+        return HttpResponse(status=200)
+    
 def fulfill_order(line_items):
     # TODO: fill me in
     for line_item in line_items['data']:

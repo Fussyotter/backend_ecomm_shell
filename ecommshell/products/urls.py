@@ -1,7 +1,7 @@
 from django.urls import path
 
 from . import views
-from .views import WebHook
+# from .views import WebHook
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -15,5 +15,5 @@ urlpatterns = [
          views.CategoryItemView.as_view(), name="category_item"),
     path("checkout/<slug:slug>/", views.CreateCheckoutSessionView.as_view(), name="create_checkout_session"),
     # path("webhook/", webhook, name="webhook"),
-    path("webhook/", WebHook.as_view(), name="webhook"),
+    path("webhook/stripe/", views.WebHook.as_view()),
     ]
