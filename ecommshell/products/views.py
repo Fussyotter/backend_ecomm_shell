@@ -19,6 +19,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -50,35 +51,60 @@ YOUR_DOMAIN = "http://localhost:3000/"
 
 class CreateCheckoutSessionView(View):
     queryset = Product.objects.all()
+
     def get(self, request, *args, **kwargs):
         product = get_object_or_404(Product, slug=self.kwargs["slug"])
         stripe.api_key = settings.STRIPE_SECRET_KEY
        # Create a Stripe checkout session
         session = stripe.checkout.Session.create(
+            shipping_address_collection={"allowed_countries": ["US", "CA"]},
+            shipping_options=[
+                {
+                    "shipping_rate_data": {
+                        "type": "fixed_amount",
+                        "fixed_amount": {"amount": 0, "currency": "usd"},
+                        "display_name": "Free shipping",
+                        "delivery_estimate": {
+                            "minimum": {"unit": "business_day", "value": 5},
+                            "maximum": {"unit": "business_day", "value": 7},
+                        },
+                    },
+                },
+                {
+                    "shipping_rate_data": {
+                        "type": "fixed_amount",
+                        "fixed_amount": {"amount": 1500, "currency": "usd"},
+                        "display_name": "Next day air",
+                        "delivery_estimate": {
+                            "minimum": {"unit": "business_day", "value": 1},
+                            "maximum": {"unit": "business_day", "value": 1},
+                        },
+                    },
+                },
+            ],
             payment_method_types=['card'],
             line_items=[
-                        {
-                            'price_data': {
-                                'currency': 'usd',
-                                'product_data': {
+                {
+                    'price_data': {
+                        'currency': 'usd',
+                        'product_data': {
                                     'name': product.title,
 
-                                },
-                                'unit_amount': int(product.regular_price * 100),
-                                
-
-                            },
-                            'quantity': 1,
                         },
-                    ],
-           mode='payment',
-           success_url='http://localhost:3000',
-           cancel_url='http://localhost:8000/cancel/',
-       )
-        
+                        'unit_amount': int(product.regular_price * 100),
+
+
+                    },
+                    'quantity': 1,
+                },
+            ],
+            mode='payment',
+            success_url='http://localhost:3000',
+            cancel_url='http://localhost:8000/cancel/',
+        )
 
        # Render the Stripe checkout page with the session ID
-        return JsonResponse({'session_id': session.id,'product':product.title,'price':product.regular_price,'image':product.product_image.all()[0].image.url})
+        return JsonResponse({'session_id': session.id, 'product': product.title, 'price': product.regular_price, 'image': product.product_image.all()[0].image.url})
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -101,20 +127,38 @@ class WebHook(View):
         except stripe.error.SignatureVerificationError as err:
             # Invalid signature
             return HttpResponse(status=400)
+          # Handle the checkout.session.completed event
+    # Retrieve the session. If you require line items in the response, you may include them by expanding line_items.
+        if event['type'] == 'checkout.session.completed':
+            session = stripe.checkout.Session.retrieve(
+                event['data']['object']['id'],
+                expand=['line_items','shipping_address_collection']
+            )
 
-        # Handle the event
-        if event['type'] == 'payment_intent.succeeded':
-            payment_intent = event['data']['object']
-            print("--------payment_intent ---------->", payment_intent)
-        elif event['type'] == 'payment_method.attached':
-            payment_method = event['data']['object']
-            print("--------payment_method ---------->", payment_method)
-        # ... handle other event types
+            line_items = session['line_items']
+            description = line_items["data"][0]["description"]
+            print("--------description ---------->", description)
+            quantity = line_items["data"][0]["quantity"]
+            print("--------quantity ---------->", quantity)
+            session_test = session['customer_details']
+            # print("--------shipping ---------->", shipping)
+            print("--------line_items ---------->", line_items)
+            # print("--------session_test ---------->", session_test)
+
         else:
             print('Unhandled event type {}'.format(event['type']))
 
         return HttpResponse(status=200)
-    
+        # Handle the event
+        # if event['type'] == 'payment_intent.succeeded':
+        #     payment_intent = event['data']['object']
+        #     print("--------payment_intent ---------->", payment_intent)
+        # elif event['type'] == 'payment_method.attached':
+        #     payment_method = event['data']['object']
+        #     print("--------payment_method ---------->", payment_method)
+        # ... handle other event types
+
+
 def fulfill_order(line_items):
     # TODO: fill me in
     for line_item in line_items['data']:
@@ -131,14 +175,6 @@ def fulfill_order(line_items):
         product.save()
 
     # print("Fulfilling order")
-
-
-
-
-
-
-
-
 
     # return redirect(checkout_session.url)
 # class CreateCheckoutSessionView(APIView):
