@@ -1,23 +1,23 @@
 import stripe
 import json
-from django.conf import settings
-from django.http import JsonResponse, HttpResponse
-from django.urls import reverse
+import requests
 
-from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render
-from rest_framework import generics
-from django.views import View
 from . import models
 from .models import Category, Product
 from .serializers import CategorySerializer, ProductSerializer
-from django.shortcuts import get_object_or_404
+
+from django.conf import settings
+from django.http import JsonResponse, HttpResponse
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.shortcuts import render
+from rest_framework import generics
+from rest_framework.generics import UpdateAPIView
+from django.views import View
+from django.shortcuts import get_object_or_404
 
 from django.views.decorators.csrf import csrf_exempt
-import logging
 
-logger = logging.getLogger(__name__)
 
 
 class ProductListView(generics.ListAPIView):
@@ -25,7 +25,8 @@ class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
 
 
-class ProductDetail(generics.RetrieveAPIView):
+@method_decorator(csrf_exempt, name="dispatch")
+class ProductDetail(generics.RetrieveUpdateAPIView):
     lookup_field = "slug"
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -144,20 +145,34 @@ class WebHook(View):
             # print("--------shipping ---------->", shipping)
             print("--------line_items ---------->", line_items)
             # print("--------session_test ---------->", session_test)
+            update_product(description, quantity)
 
         else:
             print('Unhandled event type {}'.format(event['type']))
 
         return HttpResponse(status=200)
-        # Handle the event
-        # if event['type'] == 'payment_intent.succeeded':
-        #     payment_intent = event['data']['object']
-        #     print("--------payment_intent ---------->", payment_intent)
-        # elif event['type'] == 'payment_method.attached':
-        #     payment_method = event['data']['object']
-        #     print("--------payment_method ---------->", payment_method)
-        # ... handle other event types
 
+
+
+@csrf_exempt
+def update_product(description, quantity):
+    url = f"http://localhost:8000/api/{description}/"
+    response = requests.get(url)
+    print(response)
+    if response.ok:
+        product = response.json()
+        print(product)
+        product["amount"] -= quantity
+        serializer = ProductSerializer(data=product)
+        if serializer.is_valid():
+            data = serializer.validated_data
+            response = requests.put(url, json=data)
+            if response.ok:
+                print("Product updated successfully")
+            else:
+                print("Product update failed")
+        else:
+            print("Product serialization failed")
 
 def fulfill_order(line_items):
     # TODO: fill me in
