@@ -15,7 +15,6 @@ from rest_framework import generics
 from rest_framework.generics import UpdateAPIView
 from django.views import View
 from django.shortcuts import get_object_or_404
-
 from django.views.decorators.csrf import csrf_exempt
 
 
@@ -24,6 +23,9 @@ class ProductListView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
 
+
+def get_random_products(count):
+    return Product.objects.order_by('?')[:count]
 
 @method_decorator(csrf_exempt, name="dispatch")
 class ProductDetail(generics.RetrieveUpdateAPIView):

@@ -1,6 +1,12 @@
+from django.utils.text import slugify
+import os
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ecommshell.settings')
+import django
 import random
 import string
-from django.utils.text import slugify
+
+django.setup()
+
 from products.models import Product
 
 # Define the list of possible titles for the products
@@ -13,7 +19,12 @@ for title in titles:
     # Set the title
     product.title = title
     # Set the slug
-    product.slug = slugify(title)
+    slug = slugify(product.title)
+    count = 1
+    while Product.objects.filter(slug=slug).exists():
+        count += 1
+        slug = f"{slugify(product.title)}-{count}"
+    product.slug = slug
     # Set the description
     product.description = "This is the description for " + title
     # Set the regular price
@@ -25,8 +36,3 @@ for title in titles:
     product.amount = random.randint(1, 10)
     # Save the product instance to the database
     product.save()
-
-if __name__ == '__main__':
-    print("Loading data...")
-    loadData()
-    print("Data loaded successfully!")

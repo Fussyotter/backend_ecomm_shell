@@ -1,6 +1,6 @@
 # Ecommerce Backend Shell
 
-A Django backend for a small business ecommerce site. This shell contains customizable product models with a variety of specifics to help categorize and search. User Authentication and Stripe Payment are within the shell as well.
+A Django backend for a small business ecommerce site. This shell contains customizable product models with a variety of specifics to help categorize and search. User Authentication and Stripe Payment are within the shell as well. 
 
 ## Installation
 
