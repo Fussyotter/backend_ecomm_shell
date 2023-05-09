@@ -17,6 +17,7 @@ def get_csrf(request):
     response['X-CSRFToken'] = get_token(request)
     return response
 
+
 @require_POST
 def loginView(request):
     data = json.loads(request.body)
@@ -25,26 +26,36 @@ def loginView(request):
 
     if username is None or password is None:
         return JsonResponse({'Error': "Please provide both username and password"}, status=400)
-    
+
     user = authenticate(username=username, password=password)
     if user is None:
         return JsonResponse({'Error': "Invalid Credentials"}, status=400)
-    
+
     login(request, user)
-    return JsonResponse({'Info': "Success - Logged In"})
+
+    # Return the user details along with the CSRF cookie
+    response = JsonResponse({'Info': "Success - Logged In"})
+    response['X-CSRFToken'] = get_token(request)
+    response['user'] = {'id': user.id, 'username': user.username}
+    return response
 
 class signupView(APIView):
-    queryset = User.objects.all()
-
     serializer_class = UserSerializer
 
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
+        serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return JsonResponse({'Info': "Success - Created User"})
-        return JsonResponse(serializer.errors, status=400)
-    
+            username = serializer.validated_data.get('username')
+            password = serializer.validated_data.get('password')
+            email = serializer.validated_data.get('email')
+            first_name = serializer.validated_data.get('first_name', '')
+            last_name = serializer.validated_data.get('last_name', '')
+            User.objects.create_user(username=username, password=password, email=email,
+                                     first_name=first_name, last_name=last_name)
+            return Response({'Info': "Success - Created User"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
