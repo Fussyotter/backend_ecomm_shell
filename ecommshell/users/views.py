@@ -1,14 +1,15 @@
 import json
 
+from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.http import require_POST
 from django.middleware.csrf import get_token
 from rest_framework.views import APIView
 from django.http import JsonResponse
-from rest_framework import generics
+from rest_framework import generics, status
 from .serializers import UserSerializer
-
-from .models import User
+from rest_framework.response import Response
+# from .models import User
 
 
     # this is finally making sense to me.  the get_token function is a built in django function that returns a csrf token.  we are then setting the csrf token in the response header.  the response header is then sent back to the client.  the client then sets the csrf token in the cookie.  the csrf token is then sent back to the server in the header of the next request.  the server then checks the csrf token in the header against the csrf token in the cookie.  if they match, the request is allowed to continue.  if they don't match, the request is rejected.  this is how django protects against csrf attacks.
@@ -41,6 +42,9 @@ def loginView(request):
 
 class signupView(APIView):
     serializer_class = UserSerializer
+
+    def get_queryset(self):
+        return User.objects.all()
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
