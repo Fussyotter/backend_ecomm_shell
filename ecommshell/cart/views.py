@@ -17,6 +17,8 @@ def add_to_cart(request):
     quantity = request.data.get('quantity', 1)
 
     product = get_object_or_404(Product, id=product_id)
+    print(user)
+    print(product)
 
     if not user.is_authenticated:
         return Response({'error': 'User is not authenticated'}, status=status.HTTP_401_UNAUTHORIZED)
