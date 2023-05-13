@@ -1,29 +1,29 @@
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.views import APIView
+from django.contrib.auth.decorators import login_required
 from .models import Cart, CartItem
 from products.models import Product
 from .serializers import CartItemSerializer
-from django.views.decorators.csrf import csrf_exempt
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
 
 
-@csrf_exempt
 @login_required
-def add_to_cart(request, product_id):
-    cart, created = Cart.objects.get_or_create(user=request.user)
+class AddToCartView(APIView):
+    serializer_class = CartItemSerializer  # Define the serializer class
 
-    product = get_object_or_404(Product, id=product_id)
-    quantity = request.POST.get('quantity', 1)
+    def post( request, product_id):
+        cart, created = Cart.objects.get_or_create(user=request.user)
 
-    cart.add_product(product, quantity)
+        product = get_object_or_404(Product, id=product_id)
+        quantity = request.data.get('quantity', 1)
 
-    response_data = {
-        'success': True,
-        'message': f"{product.title} added to cart.",
-        'cart_total': cart.calculate_total(),
-    }
+        cart.add_product(product, quantity)
 
-    return JsonResponse(response_data)
+        response_data = {
+            'success': True,
+            'message': f"{product.title} added to cart.",
+            'cart_total': cart.calculate_total(),
+        }
+
+        return Response(response_data, status=status.HTTP_200_OK)

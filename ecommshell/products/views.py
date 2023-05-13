@@ -17,11 +17,14 @@ from django.views import View
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 
-
-
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
+
 
 
 def get_random_products(count):
