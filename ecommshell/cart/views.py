@@ -6,13 +6,14 @@ from django.contrib.auth.decorators import login_required
 from .models import Cart, CartItem
 from products.models import Product
 from .serializers import CartItemSerializer
+from django.utils.decorators import method_decorator
 
 
-@login_required
+@method_decorator(login_required, name='dispatch')
 class AddToCartView(APIView):
     serializer_class = CartItemSerializer  # Define the serializer class
 
-    def post( request, product_id):
+    def post(self, request, product_id):  # Include 'self' here
         cart, created = Cart.objects.get_or_create(user=request.user)
 
         product = get_object_or_404(Product, id=product_id)

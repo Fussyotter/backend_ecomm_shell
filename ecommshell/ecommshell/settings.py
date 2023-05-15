@@ -148,7 +148,7 @@ CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
     'https://api.stripe.com',
 ]
-CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
+CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken","CSRF-Token"]
 CORS_ALLOW_CREDENTIALS = True
 
 REST_FRAMEWORK = {

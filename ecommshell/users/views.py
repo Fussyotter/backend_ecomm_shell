@@ -40,6 +40,10 @@ def loginView(request):
     # Return the user details along with the CSRF cookie
     response = JsonResponse({'Info': "Success - Logged In"})
     response['user'] = {'id': user.id, 'username': user.username}
+    response['CSRF-Token'] = get_token(request)
+    response['Access-Control-Expose-Headers'] = 'CSRF-Token'
+
+    print("After login:", request.session.items())
     return response
 
 class signupView(APIView):
