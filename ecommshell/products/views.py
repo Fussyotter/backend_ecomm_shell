@@ -1,30 +1,37 @@
 import stripe
 import json
-from django.conf import settings
-from django.http import JsonResponse, HttpResponse
-from django.urls import reverse
+import requests
 
-from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import render
-from rest_framework import generics
-from django.views import View
 from . import models
 from .models import Category, Product
 from .serializers import CategorySerializer, ProductSerializer
-from django.shortcuts import get_object_or_404
-from django.utils.decorators import method_decorator
 
+from django.conf import settings
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-import logging
-
-logger = logging.getLogger(__name__)
+from django.utils.decorators import method_decorator
+from django.shortcuts import render
+from rest_framework import generics
+from rest_framework.generics import UpdateAPIView
+from django.views import View
+from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
 
-class ProductDetail(generics.RetrieveAPIView):
+
+def get_random_products(count):
+    return Product.objects.order_by('?')[:count]
+
+@method_decorator(csrf_exempt, name="dispatch")
+class ProductDetail(generics.RetrieveUpdateAPIView):
     lookup_field = "slug"
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -50,35 +57,60 @@ YOUR_DOMAIN = "http://localhost:3000/"
 
 class CreateCheckoutSessionView(View):
     queryset = Product.objects.all()
+
     def get(self, request, *args, **kwargs):
         product = get_object_or_404(Product, slug=self.kwargs["slug"])
         stripe.api_key = settings.STRIPE_SECRET_KEY
        # Create a Stripe checkout session
         session = stripe.checkout.Session.create(
+            shipping_address_collection={"allowed_countries": ["US", "CA"]},
+            shipping_options=[
+                {
+                    "shipping_rate_data": {
+                        "type": "fixed_amount",
+                        "fixed_amount": {"amount": 0, "currency": "usd"},
+                        "display_name": "Free shipping",
+                        "delivery_estimate": {
+                            "minimum": {"unit": "business_day", "value": 5},
+                            "maximum": {"unit": "business_day", "value": 7},
+                        },
+                    },
+                },
+                {
+                    "shipping_rate_data": {
+                        "type": "fixed_amount",
+                        "fixed_amount": {"amount": 1500, "currency": "usd"},
+                        "display_name": "Next day air",
+                        "delivery_estimate": {
+                            "minimum": {"unit": "business_day", "value": 1},
+                            "maximum": {"unit": "business_day", "value": 1},
+                        },
+                    },
+                },
+            ],
             payment_method_types=['card'],
             line_items=[
-                        {
-                            'price_data': {
-                                'currency': 'usd',
-                                'product_data': {
+                {
+                    'price_data': {
+                        'currency': 'usd',
+                        'product_data': {
                                     'name': product.title,
 
-                                },
-                                'unit_amount': int(product.regular_price * 100),
-                                
-
-                            },
-                            'quantity': 1,
                         },
-                    ],
-           mode='payment',
-           success_url='http://localhost:3000',
-           cancel_url='http://localhost:8000/cancel/',
-       )
-        
+                        'unit_amount': int(product.regular_price * 100),
+
+
+                    },
+                    'quantity': 1,
+                },
+            ],
+            mode='payment',
+            success_url='http://localhost:3000',
+            cancel_url='http://localhost:8000/cancel/',
+        )
 
        # Render the Stripe checkout page with the session ID
-        return JsonResponse({'session_id': session.id,'product':product.title,'price':product.regular_price,'image':product.product_image.all()[0].image.url})
+        return JsonResponse({'session_id': session.id, 'product': product.title, 'price': product.regular_price, 'image': product.product_image.all()[0].image.url})
 
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -101,20 +133,52 @@ class WebHook(View):
         except stripe.error.SignatureVerificationError as err:
             # Invalid signature
             return HttpResponse(status=400)
+          # Handle the checkout.session.completed event
+    # Retrieve the session. If you require line items in the response, you may include them by expanding line_items.
+        if event['type'] == 'checkout.session.completed':
+            session = stripe.checkout.Session.retrieve(
+                event['data']['object']['id'],
+                expand=['line_items','shipping_address_collection']
+            )
 
-        # Handle the event
-        if event['type'] == 'payment_intent.succeeded':
-            payment_intent = event['data']['object']
-            print("--------payment_intent ---------->", payment_intent)
-        elif event['type'] == 'payment_method.attached':
-            payment_method = event['data']['object']
-            print("--------payment_method ---------->", payment_method)
-        # ... handle other event types
+            line_items = session['line_items']
+            description = line_items["data"][0]["description"]
+            print("--------description ---------->", description)
+            quantity = line_items["data"][0]["quantity"]
+            print("--------quantity ---------->", quantity)
+            session_test = session['customer_details']
+            # print("--------shipping ---------->", shipping)
+            print("--------line_items ---------->", line_items)
+            # print("--------session_test ---------->", session_test)
+            update_product(description, quantity)
+
         else:
             print('Unhandled event type {}'.format(event['type']))
 
         return HttpResponse(status=200)
-    
+
+
+
+@csrf_exempt
+def update_product(description, quantity):
+    url = f"http://localhost:8000/api/{description}/"
+    response = requests.get(url)
+    print(response)
+    if response.ok:
+        product = response.json()
+        print(product)
+        product["amount"] -= quantity
+        serializer = ProductSerializer(data=product)
+        if serializer.is_valid():
+            data = serializer.validated_data
+            response = requests.put(url, json=data)
+            if response.ok:
+                print("Product updated successfully")
+            else:
+                print("Product update failed")
+        else:
+            print("Product serialization failed")
+
 def fulfill_order(line_items):
     # TODO: fill me in
     for line_item in line_items['data']:
@@ -131,14 +195,6 @@ def fulfill_order(line_items):
         product.save()
 
     # print("Fulfilling order")
-
-
-
-
-
-
-
-
 
     # return redirect(checkout_session.url)
 # class CreateCheckoutSessionView(APIView):

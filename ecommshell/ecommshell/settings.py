@@ -140,25 +140,27 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #  cookie authentication 
 CSRF_COOKIE_SAME_SITE = "None"
 SESSION_COOKIE_SAME_SITE = "None"
-CSRF_COOKIE_HTTPONLY = True
-SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIE_HTTPONLY = False
 CSRF_TRUSTED_ORIGINS = ['http://localhost:3000']
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ORIGIN_WHITELIST = [
     'http://localhost:3000',
     'https://api.stripe.com',
 ]
-CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken"]
+CORS_EXPOSE_HEADERS = ["Content-Type", "X-CSRFToken","CSRF-Token"]
 CORS_ALLOW_CREDENTIALS = True
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_AUTHENTICATION_CLASSES': (
-#         'rest_framework.authentication.TokenAuthentication',
-#     ),
-#     'DEFAULT_PERMISSION_CLASSES': [
-#         'rest_framework.permissions.IsAuthenticated',
-#     ]
-# }
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
 
 STRIPE_SECRET_KEY = 'sk_test_51N3Ne2A9wnMJXjnrJh5jl4isEaGXayiuQIqb3YC7YsiFsnKufWQnBXP8d6XAndGpEljKCrZm3QClVF7kb2N7gWYt00t33UWZus'
 STRIPE_SECRET_WEBHOOK = 'whsec_78d55731b559a7bb457e4c3962f6f8274a7f654df75137219a8a1e18e57ced41'
+
+LOGIN_URL = '/users/login/'
