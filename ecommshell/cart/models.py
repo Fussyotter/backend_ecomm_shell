@@ -21,7 +21,10 @@ class Cart(models.Model):
             cart=self,
             product=product
         )
-        cart_item.quantity += quantity
+        if not created:  # Only increment the quantity if the cart item already exists
+            cart_item.quantity += quantity
+        else:
+            cart_item.quantity = quantity
         cart_item.save()
 
     def remove_product(self, product):
