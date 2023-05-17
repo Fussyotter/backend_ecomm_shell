@@ -11,11 +11,13 @@ from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 
 
-@method_decorator(login_required, name='dispatch')
+# @method_decorator(login_required, name='dispatch')
 class AddToCartView(APIView):
-    serializer_class = CartItemSerializer  # Define the serializer class
+    permission_classes = [IsAuthenticated]  
 
-    def post(self, request, product_id):  # Include 'self' here
+    serializer_class = CartItemSerializer  
+
+    def post(self, request, product_id): 
         cart, created = Cart.objects.get_or_create(user=request.user)
 
         product = get_object_or_404(Product, id=product_id)
