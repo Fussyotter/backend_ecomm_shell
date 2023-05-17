@@ -16,10 +16,13 @@ from rest_framework.generics import UpdateAPIView
 from django.views import View
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.permissions import AllowAny
 
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    permission_classes = [AllowAny]
+
     
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
