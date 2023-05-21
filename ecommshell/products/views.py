@@ -16,28 +16,39 @@ from rest_framework.generics import UpdateAPIView
 from django.views import View
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
 from rest_framework.permissions import AllowAny
 
 class ProductListView(generics.ListAPIView):
-    queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
-
     
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
 
+    def get_queryset(self):
+        queryset = Product.objects.all()
+        search_param = self.request.query_params.get('search', None)
+        if search_param is not None:
+            queryset = queryset.filter(
+                Q(title__icontains=search_param) | Q(category__name__icontains=search_param)
+            )
+        return queryset
 
 
 def get_random_products(count):
     return Product.objects.order_by('?')[:count]
 
-@method_decorator(csrf_exempt, name="dispatch")
 class ProductDetail(generics.RetrieveUpdateAPIView):
-    lookup_field = "slug"
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    lookup_field = 'slug'
+    permission_classes = [AllowAny]
+
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
 
 
 class CategoryItemView(generics.ListAPIView):
