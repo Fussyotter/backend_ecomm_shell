@@ -158,7 +158,9 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ]
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10
 }
 
 STRIPE_SECRET_KEY = 'sk_test_51N3Ne2A9wnMJXjnrJh5jl4isEaGXayiuQIqb3YC7YsiFsnKufWQnBXP8d6XAndGpEljKCrZm3QClVF7kb2N7gWYt00t33UWZus'

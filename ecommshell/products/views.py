@@ -18,10 +18,13 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from rest_framework.permissions import AllowAny
+from rest_framework.pagination import PageNumberPagination
 
 class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
+    pagination_class = PageNumberPagination
+
     
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
