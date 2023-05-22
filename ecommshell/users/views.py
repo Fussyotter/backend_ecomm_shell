@@ -2,6 +2,7 @@ import json
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.middleware.csrf import get_token
 from rest_framework.views import APIView
@@ -46,6 +47,12 @@ def loginView(request):
     print("After login:", request.session.items())
     return response
 
+@require_POST
+def logoutView(request):
+    logout(request)
+    response = JsonResponse({'Info': "Success - Logged Out"})
+    return response
+
 class signupView(APIView):
     serializer_class = UserSerializer
 
@@ -69,3 +76,9 @@ class signupView(APIView):
 class UserListView(generics.ListAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+
+@login_required
+def getCurrentUser(request):
+    user = request.user
+    return JsonResponse({'username': user.username})
