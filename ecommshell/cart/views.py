@@ -16,7 +16,7 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.views import View
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse, HttpResponseRedirect
 
 # @method_decorator(login_required, name='dispatch')
 class AddToCartView(APIView):
