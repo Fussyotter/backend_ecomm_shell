@@ -1,6 +1,6 @@
 # Ecommerce Backend Shell
 
-A Django backend for a small business ecommerce site. This shell contains customizable product models with a variety of specifics to help categorize and search. User Authentication and Stripe Payment are within the shell as well. 
+A Django backend for a small business ecommerce site. This shell contains customizable product models with a variety of specifics to help categorize and search. User Authentication and Stripe Payment are within the shell as well. The frontend is built with Next.js and can be found here: `https://github.com/Fussyotter/ecommShell`.   The intention for this shell is a base for small ecommerce sites that can be customized to fit the needs of the business.  For more specific uses of Stripe Payment, please see the Stripe documentation.  This shell is not intended to be a full ecommerce site, but a starting point for a small business to build upon.  Currently Checkout for cart is fully functional but for your specific use adjust webhooks as needed.
 
 ## Installation
 
@@ -10,6 +10,9 @@ A Django backend for a small business ecommerce site. This shell contains custom
 4. Set up environment variables for Stripe API keys and other configuration options: `cp .env.example .env` and update `.env` file with your values.
 5. Set up a database: `python3 manage.py migrate`
 6. Start development server: `python3 manage.py runserver`
+<!-- Optional for testing -->
+7. run loaddata to load the initial data: `python3 loadData.py`
+8. run imageLoadTest.py to load the images: `python3 imageLoadTest.py`
 
 ## Environment Variables
 
@@ -39,7 +42,6 @@ STRIPE_PUBLIC_KEY: Stripe public key
 ## Technologies Used
 
 - Django
-- Next.js
 - Stripe
 
 ## Known Issues
