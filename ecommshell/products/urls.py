@@ -15,6 +15,5 @@ urlpatterns = [
     path("products/<slug:slug>/", views.ProductDetail.as_view(), name="product"),
     path("category/<slug:slug>/",
          views.CategoryItemView.as_view(), name="category_item"),
-#     path("checkout/<slug:slug>/", views.CreateCheckoutSessionView.as_view(), name="create_checkout_session"),
-#     path("webhook/stripe/", views.WebHook.as_view()),
+
     ]

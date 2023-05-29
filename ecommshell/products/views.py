@@ -19,7 +19,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from rest_framework.permissions import AllowAny
 from rest_framework.pagination import PageNumberPagination
-
+# Main featured products view
 class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
@@ -42,7 +42,7 @@ class ProductListView(generics.ListAPIView):
 
 def get_random_products(count):
     return Product.objects.order_by('?')[:count]
-
+# Individual product view
 class ProductDetail(generics.RetrieveUpdateAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
@@ -68,7 +68,7 @@ class CategoryListView(generics.ListAPIView):
     queryset = Category.objects.filter(level=1)
     serializer_class = CategorySerializer
 
-
+# Stripe Views for Checkout, These were test views for the stripe integration   
 YOUR_DOMAIN = "http://localhost:3000/"
 
 
