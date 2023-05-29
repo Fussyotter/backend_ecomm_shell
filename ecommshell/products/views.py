@@ -1,24 +1,27 @@
-import stripe
+# Standard library imports
 import json
-import requests
 
+# Related third party imports
+import requests
+import stripe
+from django.conf import settings
+from django.http import JsonResponse, HttpResponse
+from django.shortcuts import get_object_or_404, render
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.views import View
+from django.db.models import Q
+from rest_framework import generics
+from rest_framework.generics import UpdateAPIView
+from rest_framework.permissions import AllowAny
+from rest_framework.pagination import PageNumberPagination
+
+# Local application/library specific imports
 from . import models
 from .models import Category, Product
 from .serializers import CategorySerializer, ProductSerializer
 
-from django.conf import settings
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from django.shortcuts import render
-from rest_framework import generics
-from rest_framework.generics import UpdateAPIView
-from django.views import View
-from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Q
-from rest_framework.permissions import AllowAny
-from rest_framework.pagination import PageNumberPagination
+
 # Main featured products view
 class ProductListView(generics.ListAPIView):
     serializer_class = ProductSerializer
@@ -40,8 +43,7 @@ class ProductListView(generics.ListAPIView):
         return queryset
 
 
-def get_random_products(count):
-    return Product.objects.order_by('?')[:count]
+
 # Individual product view
 class ProductDetail(generics.RetrieveUpdateAPIView):
     queryset = Product.objects.all()
