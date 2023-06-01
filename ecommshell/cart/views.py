@@ -1,22 +1,24 @@
-import stripe
 import json
-import requests
 
-from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from django.contrib.auth.decorators import login_required
-from .models import Cart, CartItem
-from products.models import Product
-from .serializers import CartItemSerializer, CartSerializer
-from django.utils.decorators import method_decorator
-from django.http import JsonResponse, HttpResponse
-from django.views.decorators.csrf import csrf_exempt
+import requests
+import stripe
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
+from django.http import (HttpResponse, HttpResponseForbidden,
+                         HttpResponseRedirect, JsonResponse)
+from django.shortcuts import get_object_or_404
+from django.utils.decorators import method_decorator
 from django.views import View
-from django.http import HttpResponseForbidden, JsonResponse, HttpResponseRedirect
+from django.views.decorators.csrf import csrf_exempt
+from products.models import Product
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from .models import Cart, CartItem
+from .serializers import CartItemSerializer, CartSerializer
+
 
 # @method_decorator(login_required, name='dispatch')
 class AddToCartView(APIView):
