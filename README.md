@@ -38,11 +38,15 @@ STRIPE_PUBLIC_KEY: Stripe public key
 - User authentication and authorization.
 - Secure payment processing using Stripe.
 - Order history and status tracking for logged-in users.
+- low level implementation of GPT-2 for SQL queries.
 
 ## Technologies Used
 
 - Django
 - Stripe
+- Pytorch
+- Transformers
+  
 
 ## Known Issues
 
