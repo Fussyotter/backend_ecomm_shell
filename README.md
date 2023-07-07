@@ -51,6 +51,7 @@ STRIPE_PUBLIC_KEY: Stripe public key
 ## Known Issues
 
 - Payment processing may not work in certain countries or with certain types of cards.
+- GPT-2 responses can be broad, requests need to be specific to db structure
 
 ## License
 
